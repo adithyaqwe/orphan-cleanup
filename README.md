@@ -27,29 +27,104 @@ OrphanCleanup translates complex cloud telemetry and pipeline signals into triag
 
 ### A. High-Level System Architecture (Flow & Decision)
 
-```text
-  [ Cloud Telemetry / Ingestion ] ──> [ Multi-Factor Detection Engine ]
-                                                   │
-                ┌──────────────────────────────────┴──────────────────────────────────┐
-                ▼                                                                     ▼
-      [ High-Confidence Signals ]                                           [ Low / Conflicting Signals ]
-                │                                                                     │
-                ▼                                                                     ▼
-    [ VERIFIED_ORPHAN ]                                                   [ HUMAN_REVIEW_REQUIRED ]
-                │                                                                     │
-                ▼                                                                     ▼
-[ 5-Min Grace Period + Liveness ]                                         [ Operator Human Review UI ]
-                │                                                                     │
-                ├───────────────────────────────┐                             ┌───────┴───────┐
-                ▼                               ▼                             ▼               ▼
-      [ Liveness Resumed ]                 [ Expired ]                   [ Protect ]     [ Approve ]
-                │                               │                             │               │
-                ▼                               ▼                             ▼               ▼
-           [ PROTECTED ]                   [ RECLAIMED ]                 [ PROTECTED ]   [ Grace Period ]
+```mermaid
+graph TD
+    A["Cloud Telemetry / Ingestion"] --> B["Multi-Factor Detection Engine"]
+    
+    B -->|High-Confidence Signals| C["VERIFIED_ORPHAN"]
+    B -->|Low / Conflicting Signals| D["HUMAN_REVIEW_REQUIRED"]
+    
+    C --> E["5-Min Grace Period + Liveness Monitoring"]
+    E -->|Liveness Resumed| F["PROTECTED"]
+    E -->|Grace Period Expired| G["RECLAIMED"]
+    
+    D --> H["Operator Human Review UI"]
+    H -->|Protect Action| I["PROTECTED"]
+    H -->|Approve Action| J["5-Min Grace Period"]
+    J --> E
 ```
 
-### B. Database Data Model & Entity Specifications
-The system maintains core entities in MongoDB via Mongoose ORM: `Resource`, `Pipeline`, `PipelineRun`, `AuditEvent`, `User`, and `Policy`.
+### B. Database Data Model & Entity-Relationship (ER) Diagram
+The system maintains 6 core entities in MongoDB via Mongoose ORM: `Organization`, `User`, `Policy`, `Pipeline`, `PipelineRun`, `Resource`, and `AuditEvent`.
+
+```mermaid
+erDiagram
+    ORGANIZATION ||--|{ USER : "has users"
+    ORGANIZATION ||--|| POLICY : "defines policy"
+    ORGANIZATION ||--|{ PIPELINE : "owns pipelines"
+    ORGANIZATION ||--|{ RESOURCE : "manages resources"
+    ORGANIZATION ||--|{ AUDIT_EVENT : "stores logs"
+
+    PIPELINE ||--|{ PIPELINE_RUN : "executes runs"
+    PIPELINE_RUN ||--|{ RESOURCE : "spawns / adopts"
+    
+    USER ||--|{ AUDIT_EVENT : "performs action"
+    RESOURCE ||--|{ AUDIT_EVENT : "generates history"
+    RESOURCE ||--o| RESOURCE : "parent_child / adopts"
+
+    ORGANIZATION {
+        ObjectId _id PK
+        string name
+        string slug
+    }
+
+    USER {
+        ObjectId _id PK
+        ObjectId organizationId FK
+        string email
+        string name
+        string role
+    }
+
+    POLICY {
+        ObjectId _id PK
+        ObjectId organizationId FK
+        number reviewThresholdHours
+        number heartbeatFreshnessMinutes
+        boolean autoReclaimEnabled
+    }
+
+    PIPELINE {
+        ObjectId _id PK
+        ObjectId organizationId FK
+        string pipelineId UK
+        string name
+        string repository
+    }
+
+    PIPELINE_RUN {
+        ObjectId _id PK
+        ObjectId organizationId FK
+        string runId UK
+        string pipelineId FK
+        string status
+        datetime lastHeartbeat
+    }
+
+    RESOURCE {
+        ObjectId _id PK
+        ObjectId organizationId FK
+        string resourceId UK
+        string name
+        string provider
+        string type
+        string state
+        string pipelineId FK
+        string runId FK
+        string ownershipState
+    }
+
+    AUDIT_EVENT {
+        ObjectId _id PK
+        ObjectId organizationId FK
+        string actorEmail
+        string actorRole
+        string action
+        string result
+        string resourceId FK
+        string reason
+    }
+```
 
 #### Database Table / Collection Specifications
 
