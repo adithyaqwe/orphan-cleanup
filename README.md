@@ -1,116 +1,155 @@
-# 🛡️ RESCUE-AI — Real-Time Emergency Operations & AI CAD Dispatch Engine
+# 🛡️ OrphanCleanup — Ephemeral Resource Lifecycle Leak Detection Platform
 
-Production-grade real-time emergency operations center (EOC) Computer-Aided Dispatch (CAD) & GIS platform built for municipal emergency management, fire service, ambulance dispatch, and law enforcement environments. Powered by Node.js, Express.js, Socket.IO, MongoDB, Mongoose ORM, React 19, Vite, Tailwind CSS, MapLibre GL 3D / Leaflet 2D GIS, and Google Gemini 2.5 Flash AI Triage Engine.
+Production-grade real-time ephemeral resource lifecycle management and leak prevention platform built for cloud infrastructure engineering, DevOps, and municipal cloud operations environments. Powered by **Node.js**, **Express.js**, **MongoDB**, **Mongoose ORM**, **React 18**, **Vite**, and **Google Gemini AI Advisory Engine**.
+
+> **"WHEN THE SYSTEM IS UNCERTAIN, IT DOES NOT DELETE — IT ASKS A HUMAN."**
 
 ---
 
 ## 📋 Table of Contents
+
 1. [Architecture Overview & Diagrams](#1-architecture-overview--diagrams)
-   - [A. High-Level System Architecture (Mermaid & Flow)](#a-high-level-system-architecture-mermaid--flow)
-   - [B. Database Data Model & Entity-Relationship (ER) Diagram](#b-database-data-model--entity-relationship-er-diagram)
-   - [C. Dual Data Stream Pipeline](#c-dual-data-stream-pipeline)
-   - [D. 12-Stage Incident Dispatch & Triage Sequence](#d-12-stage-incident-dispatch--triage-sequence)
-2. [AI Emergency Triage & Apparatus Recommendation Matrix](#2-ai-emergency-triage--apparatus-recommendation-matrix)
-3. [Key Architectural Patterns](#3-key-architectural-patterns)
-4. [Environment Variables Configuration](#4-environment-variables-configuration)
-5. [Local Development Setup Guide](#5-local-development-setup-guide)
-6. [Project Directory Structure](#6-project-directory-structure)
-7. [REST API Reference & Socket.IO Events](#7-rest-api-reference--socketio-events)
-8. [Security & Operational Guardrails](#8-security--operational-guardrails)
-9. [Verifiable Audit Trail & CAD Logs](#9-verifiable-audit-trail--cad-logs)
+   - [A. High-Level System Architecture](#a-high-level-system-architecture)
+   - [B. Database Data Model & Entity Specifications](#b-database-data-model--entity-specifications)
+   - [C. Multi-Factor Detection & Triage Sequence](#c-multi-factor-detection--triage-sequence)
+2. [Core Detection & Safety Matrix](#2-core-detection--safety-matrix)
+3. [Human-in-the-Loop Safety Fallback System](#3-human-in-the-loop-safety-fallback-system)
+4. [Two-Phase Reclamation & Grace Period Engine](#4-two-phase-reclamation--grace-period-engine)
+5. [Key Architectural Safeguards](#5-key-architectural-safeguards)
+6. [Environment Variables Configuration](#6-environment-variables-configuration)
+7. [Local Development Setup Guide](#7-local-development-setup-guide)
+8. [Project Directory Structure](#8-project-directory-structure)
+9. [REST API Reference](#9-rest-api-reference)
+10. [Security, RBAC & Immutable Compliance Audit Trail](#10-security-rbac--immutable-compliance-audit-trail)
 
 ---
 
 ## 1. Architecture Overview & Diagrams
 
-RESCUE-AI translates chaotic emergency distress calls into triaged emergency profiles, recommends nearest available first-responder apparatus, calculates real-time driving routes via OSRM, and streams live telemetry across 2D/3D command cartography views.
+OrphanCleanup continuously monitors temporary cloud resources (EC2 instances, Kubernetes pods, preview build environments, containers) to identify abandoned infra leaks while enforcing a **Zero False Positive Reclamation Guarantee**.
 
-### A. High-Level System Architecture (Mermaid & Flow)
+### A. High-Level System Architecture
 
-### B. Database Data Model & Entity-Relationship (ER) Diagram
-The system maintains 3 core entities in MongoDB via Mongoose ORM: `Incident`, `Responder`, and `User`.
+```text
+  [ Cloud Telemetry / Ingestion ] ──> [ Multi-Factor Detection Engine ]
+                                                   │
+                ┌──────────────────────────────────┴──────────────────────────────────┐
+                ▼                                                                     ▼
+      [ High-Confidence Signals ]                                           [ Low / Conflicting Signals ]
+                │                                                                     │
+                ▼                                                                     ▼
+    [ VERIFIED_ORPHAN ]                                                   [ HUMAN_REVIEW_REQUIRED ]
+                │                                                                     │
+                ▼                                                                     ▼
+[ 5-Min Grace Period + Liveness ]                                         [ Operator Human Review UI ]
+                │                                                                     │
+                ├───────────────────────────────┐                             ┌───────┴───────┐
+                ▼                               ▼                             ▼               ▼
+      [ Liveness Resumed ]                 [ Expired ]                   [ Protect ]     [ Approve ]
+                │                               │                             │               │
+                ▼                               ▼                             ▼               ▼
+           [ PROTECTED ]                   [ RECLAIMED ]                 [ PROTECTED ]   [ Grace Period ]
+```
 
-#### Database Table / Collection Specifications
+### B. Database Data Model & Entity Specifications
 
-| Collection | Primary Key / Indexes | Description |
+The platform maintains core entities in MongoDB via Mongoose ORM:
+
+| Collection | Key Indexes | Description |
 | :--- | :--- | :--- |
-| **Incident** | `_id` (ObjectId), `incidentId` (Unique String), `status` | Ingested emergency 911 call records, AI triage assessments, location coordinates, priority scores, and unit assignments. |
-| **Responder** | `_id` (ObjectId), `unitId` (Unique String), `type`, `status` | Fleet telemetry records for EMS Ambulances, Fire Engines, Police Patrols, and Heavy Rescue apparatus. |
-| **User** | `_id` (ObjectId), `email` (Unique String), `role` | Authorized dispatch operators, supervisors, and municipal administrative accounts. |
-
-### C. Dual Data Stream Pipeline
-- **Call Intake & AI Triage Stream**: Ingests raw incident text narrative (`eventId`, `type`, `location`, `victimsCount`, `description`), executes structured Gemini 2.5 Flash analysis, assigns apparatus, and emits `incident:created` Socket.IO broadcast.
-- **AVL Fleet Telemetry Stream**: Simulates high-frequency Automatic Vehicle Location (AVL) GPS telemetry (`unitId`, `lat`, `lng`, `status`, `speed`), recalculates route distances, and emits `responder:locationUpdate` every 5 seconds.
-
-### D. 12-Stage Incident Dispatch & Triage Sequence
-```
-1. Emergency Call Received ──> 2. Structured Ingestion ──> 3. Gemini 2.5 Flash AI Analysis
-                                                                    │
-6. OSRM Road Distance Calc <── 5. Spatial Nearest Unit <── 4. Apparatus Match Matrix
-        │
-        ▼
-7. Priority Score Computed ──> 8. MongoDB Persistence ──> 9. Socket.IO Broadcast
-                                                                    │
-12. Status Closed & Archived <── 11. En Route / On Scene <── 10. Operator Confirmation
-```
+| **`resources`** | `resourceId`, `organizationId`, `state` | Telemetry records, ownership states, agent heartbeats, workload operations, detection evidence, human review states, and cleanup states. |
+| **`pipelines`** | `pipelineId`, `organizationId` | CI/CD preview builder pipeline configurations and repository metadata. |
+| **`pipelineruns`** | `runId`, `pipelineId`, `organizationId` | Pipeline execution runs (`ACTIVE`, `CRASHED`, `FAILED`), owner assignments, and adopted resource IDs. |
+| **`auditevents`** | `organizationId`, `timestamp`, `action` | Immutable audit trail tracking detection evaluations, safety gatekeeper checks, human decisions, and reclamation events. |
+| **`users`** | `email`, `organizationId` | Authorized accounts with Role-Based Access Control (`ADMIN`, `OPERATOR`, `VIEWER`). |
+| **`policies`** | `organizationId` | Organizational safeguards (protected environments, resource type protections, threshold hours). |
 
 ---
 
-## 2. AI Emergency Triage & Apparatus Recommendation Matrix
+## 2. Core Detection & Safety Matrix
 
-RESCUE-AI utilizes a structured JSON prompt schema with Google Gemini 2.5 Flash, paired with a deterministic local rule-based fallback heuristic classifier:
+The **Multi-Factor Detection Engine** evaluates 5 telemetry dimensions before classifying a resource:
 
-| Incident Type | Default Priority | Recommended Response Time | Required Apparatus Services | Immediate Action Standard |
-| :--- | :--- | :--- | :--- | :--- |
-| **Fire / Explosion** | CRITICAL / HIGH | < 5 minutes | Fire, Police, Ambulance | Evacuate immediate hazard area and deploy chemical foam tender |
-| **Mass Casualty / Cardiac** | CRITICAL | < 5 minutes | Ambulance, Medical | Deploy ALS resuscitation team & dispatch paramedic unit |
-| **Traffic Collision** | HIGH | < 8 minutes | Ambulance, Police, Fire | Secure highway perimeter and extricate trapped victims |
-| **Armed Crime / Assault** | HIGH / CRITICAL | < 10 minutes | Police | Dispatch armed response squad and set up containment |
-| **Hazardous Spill** | HIGH | < 10 minutes | Fire, Medical | Contain toxic run-off and isolate 500m radius |
-| **Routine Medical / Other** | MEDIUM / LOW | < 15 minutes | Ambulance | Dispatch nearest available Basic Life Support (BLS) unit |
-
----
-
-## 3. Key Architectural Patterns
-
-- **Separation of CAD Triage Heuristics and Real-World GIS Routing**: Triage categorization (severity, required units, victim count) is handled by deterministic AI/rule heuristics. Driving ETAs and road routes are calculated using OSRM (Open Source Routing Machine) arterial road geometry rather than straight-line haversine distance.
-- **Fail-Safe AI Degradation Pipeline**: If `GEMINI_API_KEY` is absent or network connectivity drops, the system seamlessly degrades to a deterministic local rule-based regex parser with 100% zero downtime guarantee.
-- **Pure JavaScript & ESM Module Architecture**: Written in clean ESM JavaScript (`.js` / `.jsx`) for rapid iteration, maximum bundler speed, and zero compilation friction.
-- **Interactive Command Cartography**: Integrates MapLibre GL 3D vector maps and Leaflet 2D light raster tile layers with 6 selectable color themes (Carto Light, Dark Vector, Midnight Emerald, Positron Light, Satellite Hybrid, Liberty Topo, OSM Standard) and persistent `localStorage` states.
+| Incident Signal | Evaluation Criterion | Engine Decision | Safety Standard |
+| :--- | :--- | :--- | :--- |
+| **Active Pipeline Run** | Associated pipeline run status is `ACTIVE` / `RUNNING` | **PROTECTED** | Never delete resources attached to executing builds |
+| **Verified Owner** | Active developer email assigned (`ownershipState: ACTIVE_OWNER`) | **PROTECTED** | Active owner prevents automated reclamation |
+| **Active Heartbeat** | Fresh agent pulse received within threshold ($\le 15$ min) | **PROTECTED** | Active process heartbeat keeps resource safe |
+| **Active Adoption** | Adopted by running process (`isAdopted: true`) | **PROTECTED** | Adopted child resources protected regardless of parent state |
+| **High Workload** | Workload metrics count $> 50$ operations | **PROTECTED** | High active CPU/Network ops enforce protection |
+| **Uncertain Signals** | Low non-zero metrics ($0 < \text{ops} \le 50$), unconfirmed owner, AI conflict | **HUMAN_REVIEW_REQUIRED** | Automatic deletion strictly blocked; raised for human operator |
+| **Confirmed Orphan** | Crashed run, no owner, unresponsive heartbeat, 0 ops, unadopted | **VERIFIED_ORPHAN** | Eligible for 2-Phase Reclamation |
 
 ---
 
-## 4. Environment Variables Configuration
+## 3. Human-in-the-Loop Safety Fallback System
+
+> **"WHEN THE SYSTEM IS UNCERTAIN, IT DOES NOT DELETE — IT ASKS A HUMAN."**
+
+If detection evidence is conflicting, AI advice conflicts with deterministic rules, ownership is unconfirmed, or workload metrics are ambiguous:
+
+1. **Automatic Cleanup Blocked**: The detection engine transitions state to `HUMAN_REVIEW_REQUIRED` (or `NEEDS_REVIEW`) and halts automated reclamation.
+2. **Operational Human Review UI**: Displays alert cards displaying:
+   - Resource ID & Name
+   - State Badge (`HUMAN_REVIEW_REQUIRED`)
+   - Reason for Review & Uncertainty Details
+   - Owner & Workload Status (`sarah.qa@democorp.com` / 18 ops recorded)
+   - Heartbeat Status (`Heartbeat: Present, but not responding | Adopted: No`)
+   - AI Recommendation vs Deterministic Safety Result
+3. **Operator Actions**:
+   - **Protect Resource**: Operator decision marks resource `PROTECTED` and blocks reclamation.
+   - **Approve Reclaim**: Operator decision moves resource into 5-minute grace period with final liveness monitoring.
+4. **Concurrency Lock**: Prevents race conditions between simultaneous operator decisions.
+
+---
+
+## 4. Two-Phase Reclamation & Grace Period Engine
+
+- **Phase 1 (Grace Period)**: Initiates a 5-minute countdown during which liveness monitoring runs continuously.
+- **Phase 2 (Final Reclamation)**: Re-verifies process activity before cloud API deletion. If activity resumes during the grace period, reclamation is automatically **caught and reversed**, restoring the resource to `PROTECTED`.
+
+---
+
+## 5. Key Architectural Safeguards
+
+- **"OLD ≠ ORPHAN" Rule**: Resource age alone never triggers reclamation. Activity and ownership are always verified first.
+- **Fail-Safe AI Degradation**: If `GEMINI_API_KEY` is absent or WAN connectivity drops, the system seamlessly degrades to deterministic safety rules with 100% zero downtime.
+- **Deterministic AI Guardrail**: Advisory AI recommends decisions but **never executes direct cloud deletions**.
+
+---
+
+## 6. Environment Variables Configuration
 
 ### Backend Environment Configuration (`backend/.env`)
 
 | Variable | Required | Description | Default / Example |
 | :--- | :---: | :--- | :--- |
 | `PORT` | Yes | Express REST API server listening port | `5000` |
-| `MONGO_URI` | Yes | MongoDB database connection URI | `mongodb://localhost:27017/rescue-ai` |
-| `GEMINI_API_KEY` | Optional | Google Gemini 2.5 Flash AI API key for call classification | `AIzaSy...` |
-| `VITE_3D_MAP_STYLE_URL` | Optional | Custom vector map style JSON endpoint | `https://tiles.openfreemap.org/styles/positron` |
+| `MONGO_URI` | Yes | MongoDB database connection URI | `mongodb://localhost:27017/orphan-cleanup-db` |
+| `JWT_SECRET` | Yes | Secret key for signing JWT authentication tokens | `your-secret-key` |
+| `GEMINI_API_KEY` | Optional | Google Gemini API key for natural-language advisory AI | `AIzaSy...` |
 
 ### Frontend Environment Configuration (`frontend/.env`)
 
 | Variable | Required | Description | Default / Example |
 | :--- | :---: | :--- | :--- |
 | `VITE_API_BASE_URL` | Yes | Base URL connecting to Express API | `http://localhost:5000` |
-| `VITE_MAP_TILE_URL` | Optional | Custom 2D raster tile server URL pattern | `https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png` |
 
 ---
 
-## 5. Local Development Setup Guide
+## 7. Local Development Setup Guide
 
 ### Prerequisites
 - **Node.js**: v18.0.0 or higher
 - **npm**: v9.0.0 or higher
-- **MongoDB**: Local MongoDB community server running on port 27017 or MongoDB Atlas URI
+- **MongoDB**: Local MongoDB community server running on port 27017
 
-### Step 1: Clone Repository & Install Dependencies
+### Step 1: Install Dependencies
+
 ```bash
-git clone https://github.com/adithyaqwe/RESCUE-AI.git
-cd RESCUE-AI
+# Clone repository
+git clone https://github.com/adithyaqwe/orphan-cleanup.git
+cd orphan-cleanup
 
 # Install Backend Dependencies
 cd backend
@@ -123,108 +162,106 @@ npm install
 
 ### Step 2: Start Development Servers
 
-In Terminal 1 (Backend Server & Socket.IO Engine):
+In Terminal 1 (Backend Server):
 ```bash
 cd backend
 npm run dev
 # Express API running on http://localhost:5000
-# Database connected & initial fleet seeded
 ```
 
-In Terminal 2 (React + Vite Enterprise Frontend):
+In Terminal 2 (Frontend App):
 ```bash
 cd frontend
 npm run dev
-# Vite CAD App running on http://localhost:5173
+# Vite Web App running on http://localhost:5173
 ```
 
 ---
 
-## 6. Project Directory Structure
+## 8. Project Directory Structure
 
 ```text
-RESCUE-AI/
-├── README.md                  <-- Master architectural handbook & system manual
-├── backend/                   <-- Node.js / Express.js / Socket.IO REST Engine
+orphan-cleanup/
+├── README.md                  <-- Platform documentation handbook
+├── ARCHITECTURE.md            <-- Architectural specifications & system design
+├── backend/                   <-- Node.js / Express.js REST API Server
 │   ├── package.json
+│   ├── tests/
+│   │   └── humanReview.test.js <-- 11 Human-in-the-Loop safety test scenarios
 │   └── src/
-│       ├── config/            <-- MongoDB database connection & seed dataset
-│       ├── controllers/       <-- HTTP route handlers (incidents, responders, chat)
-│       ├── models/            <-- Mongoose schemas (Incident, Responder, User)
-│       ├── routes/            <-- Express route definitions
-│       ├── services/          <-- Gemini 2.5 Flash AI triage & AVL simulation
-│       └── index.js           <-- Express & Socket.IO server entry point
-└── frontend/                  <-- Enterprise React 19 + Vite CAD Single Page App
-    ├── index.html             <-- HTML entry with main.jsx module root
-    ├── package.json
-    ├── vite.config.js         <-- Vite build & proxy configuration
+│       ├── cleanup/           <-- Two-phase reclamation & concurrency locking engine
+│       ├── controllers/       <-- Express route controllers
+│       ├── detection/         <-- Multi-factor detection engine & AWS ingestion
+│       ├── middleware/        <-- Auth, RBAC (ADMIN/OPERATOR/VIEWER), rate limiters
+│       ├── models/            <-- Mongoose schemas (Resource, AuditEvent, User, etc.)
+│       ├── routes/            <-- API endpoint definitions
+│       ├── security/          <-- Deterministic safety engine & gatekeepers
+│       ├── services/          <-- Seed service & auto-cleanup background worker
+│       └── server.js          <-- Express server entry point
+└── frontend/                  <-- Enterprise React 18 + Vite Web Application
+    ├── index.html
+    ├── vite.config.js
     └── src/
-        ├── App.css
-        ├── App.jsx            <-- Master EOC Command Center layout container
-        ├── api.js             <-- Axios HTTP client definitions
-        ├── index.css          <-- Tailwind CSS v4 directives & light design tokens
-        ├── main.jsx           <-- React 19 root bootstrap
-        └── components/
-            ├── AiAssistant.jsx       <-- AI Dispatch copilot chat interface
-            ├── CallIntake.jsx        <-- Emergency call intake modal form
-            ├── CustomCursor.jsx      <-- Tactical CAD crosshair reticle
-            ├── FleetMonitor.jsx      <-- Live AVL fleet roster table
-            ├── IncidentControl.jsx   <-- Command dossier & unit dispatch controller
-            ├── IncidentList.jsx      <-- Incident queue feed & filter panel
-            ├── MouseLight.jsx        <-- Radial ambient light backdrop
-            ├── RadarMap.jsx          <-- 2D/3D map container & theme sync
-            ├── StatusBar.jsx         <-- Municipal CAD status telemetry footer
-            ├── SystemLogs.jsx        <-- Live dispatch event stream feed
-            ├── ToastNotification.jsx <-- Alert notification engine
-            └── map/
-                ├── GisMap2D.jsx      <-- Leaflet 2D light GIS engine
-                ├── GisMap3D.jsx      <-- MapLibre GL 3D vector GIS engine
-                ├── Map3DControls.jsx <-- Pitch, tilt, zoom, and compass controls
-                ├── MapControls.jsx   <-- 2D map controls & layer toggle
-                ├── MapLayersMenu.jsx <-- Theme selector popover with live swatches
-                └── mapUtils.js       <-- Distance math, OSRM routing, & map themes
+        ├── App.jsx
+        ├── components/        <-- Status badges, modals, tooltips, buttons, banners
+        ├── context/           <-- Authentication context & role providers
+        ├── pages/
+        │   ├── CleanupCenterPage.jsx  <-- Human Review Section, Grace Period & Audit
+        │   ├── DashboardPage.jsx      <-- Analytics hub & countdown scanner
+        │   ├── InventoryPage.jsx      <-- 360-degree resource inventory
+        │   └── ResourceDetailPage.jsx <-- Single resource telemetry & actions
+        └── services/
+            └── api.js         <-- Live Axios API client with JWT support
 ```
 
 ---
 
-## 7. REST API Reference & Socket.IO Events
-
-### REST API Endpoints
+## 9. REST API Reference
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| **GET** | `/health` | Server liveness & status check |
-| **GET** | `/api/incidents` | Fetch all active and cleared emergency incidents |
-| **POST** | `/api/incidents` | Submit new emergency intake call (triggers AI triage) |
-| **GET** | `/api/incidents/:id` | Retrieve specific incident details & assignment dossier |
-| **PUT** | `/api/incidents/:id/dispatch` | Dispatch apparatus units to incident location |
-| **PUT** | `/api/incidents/:id/status` | Update incident response status (`EN_ROUTE`, `ARRIVED`, `RESOLVED`) |
-| **GET** | `/api/responders` | Retrieve real-time fleet roster & unit locations |
-| **POST** | `/api/chat` | Query AI Dispatch Copilot assistant for tactical guidance |
-
-### Socket.IO Real-Time Events
-
-| Event Name | Direction | Payload | Description |
-| :--- | :--- | :--- | :--- |
-| `incident:created` | Server ➔ Client | `Incident` object | Broadcast when a new incident is triaged & added |
-| `incident:updated` | Server ➔ Client | `Incident` object | Broadcast when incident status or dispatch changes |
-| `responder:locationUpdate` | Server ➔ Client | `[Responders]` | High-frequency telemetry stream of unit coordinates |
+| **GET** | `/api/health` | System health & liveness check |
+| **POST** | `/api/auth/login` | User login & HTTP-Only JWT token issuance |
+| **GET** | `/api/resources` | List resources with filter params (`state`, `search`) |
+| **GET** | `/api/resources/:id` | Fetch 360-degree resource telemetry |
+| **POST** | `/api/detection/evaluate/:id` | Run multi-factor detection engine on resource |
+| **POST** | `/api/ai/analyze/:id` | Query Advisory AI model for natural language analysis |
+| **POST** | `/api/cleanup/human-review/:id/protect` | Protect human review resource (Operator/Admin) |
+| **POST** | `/api/cleanup/human-review/:id/approve-reclaim` | Approve human review reclaim & start grace period |
+| **POST** | `/api/cleanup/schedule/:id` | Start 5-minute Two-Phase grace period |
+| **POST** | `/api/cleanup/finalize/:id` | Finalize reclamation after liveness re-verification |
+| **POST** | `/api/cleanup/reverse/:id` | Simulate resumed activity & trigger Caught & Reversed |
+| **GET** | `/api/audit` | Fetch immutable compliance operations audit trail |
+| **POST** | `/api/demo/seed` | Seed Golden Scenario dataset into MongoDB |
 
 ---
 
-## 8. Security & Operational Guardrails
+## 10. Security, RBAC & Immutable Compliance Audit Trail
 
-- **Sanitized AI Input**: Raw emergency descriptions are cleaned and validated before submission to Gemini 2.5 Flash to prevent prompt injection.
-- **Fail-Safe Response Fallbacks**: Heuristic local regex parsing ensures continuous operations even during complete WAN outages.
-- **CORS & Origin Protections**: Express server restricts CORS origins in production environments to authorized municipal dispatch terminals.
+### Role-Based Access Control (RBAC) Matrix
+
+| Action | ADMIN | OPERATOR | VIEWER |
+| :--- | :---: | :---: | :---: |
+| View Inventory & Analytics | ✅ | ✅ | ✅ |
+| Run Detection & AI Analysis | ✅ | ✅ | ❌ |
+| Protect Human Review Resource | ✅ | ✅ | ❌ (403) |
+| Approve Human Review Reclaim | ✅ | ✅ | ❌ (403) |
+| Start Grace Period / Finalize Cleanup | ✅ | ✅ | ❌ (403) |
+| Direct Reclaim | ✅ | ❌ | ❌ (403) |
 
 ---
 
-## 9. Verifiable Audit Trail & CAD Logs
+## 🧪 Test Suite Execution
 
-Every dispatch transaction, unit assignment, and status transition is recorded in the operational event log stream containing:
-- `timestamp`: ISO 8601 millisecond timestamp.
-- `category`: `INTAKE`, `DISPATCH`, `STATUS`, `ALERT`, or `NETWORK`.
-- `text`: Human-readable CAD dispatch log event payload.
+Run all 9 Jest test suites (52 unit & integration tests):
 
-Dispatch logs can be inspected live via the System Event Stream tab.
+```bash
+cd backend
+npm test
+```
+
+---
+
+## 📄 License
+
+MIT License.
