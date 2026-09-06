@@ -1,34 +1,31 @@
-# 🛡️ OrphanCleanup — Ephemeral Resource Lifecycle Leak Detection Platform
+# 🛡️ OrphanCleanup — Real-Time Ephemeral Resource Safety & Leak Prevention Platform
 
-Production-grade real-time ephemeral resource lifecycle management and leak prevention platform built for cloud infrastructure engineering, DevOps, and municipal cloud operations environments. Powered by **Node.js**, **Express.js**, **MongoDB**, **Mongoose ORM**, **React 18**, **Vite**, and **Google Gemini AI Advisory Engine**.
-
-> **"WHEN THE SYSTEM IS UNCERTAIN, IT DOES NOT DELETE — IT ASKS A HUMAN."**
+Production-grade real-time ephemeral resource lifecycle management and leak prevention platform built for cloud infrastructure engineering, DevOps, and municipal cloud operations environments. Powered by Node.js, Express.js, MongoDB, Mongoose ORM, React 18, Vite, and Google Gemini Advisory AI Engine.
 
 ---
 
 ## 📋 Table of Contents
-
-1. [Architecture Overview & Diagrams](#1-architecture-overview--diagrams)
-   - [A. High-Level System Architecture](#a-high-level-system-architecture)
-   - [B. Database Data Model & Entity Specifications](#b-database-data-model--entity-specifications)
-   - [C. Multi-Factor Detection & Triage Sequence](#c-multi-factor-detection--triage-sequence)
-2. [Core Detection & Safety Matrix](#2-core-detection--safety-matrix)
-3. [Human-in-the-Loop Safety Fallback System](#3-human-in-the-loop-safety-fallback-system)
-4. [Two-Phase Reclamation & Grace Period Engine](#4-two-phase-reclamation--grace-period-engine)
-5. [Key Architectural Safeguards](#5-key-architectural-safeguards)
-6. [Environment Variables Configuration](#6-environment-variables-configuration)
-7. [Local Development Setup Guide](#7-local-development-setup-guide)
-8. [Project Directory Structure](#8-project-directory-structure)
-9. [REST API Reference](#9-rest-api-reference)
-10. [Security, RBAC & Immutable Compliance Audit Trail](#10-security-rbac--immutable-compliance-audit-trail)
+- [1. Architecture Overview & Diagrams](https://github.com/adithyaqwe/orphan-cleanup#1-architecture-overview--diagrams)
+  - [A. High-Level System Architecture (Flow & Decision)](https://github.com/adithyaqwe/orphan-cleanup#a-high-level-system-architecture-flow--decision)
+  - [B. Database Data Model & Entity Specifications](https://github.com/adithyaqwe/orphan-cleanup#b-database-data-model--entity-specifications)
+  - [C. Dual Telemetry Stream Pipeline](https://github.com/adithyaqwe/orphan-cleanup#c-dual-telemetry-stream-pipeline)
+  - [D. 12-Stage Resource Triage & Reclamation Sequence](https://github.com/adithyaqwe/orphan-cleanup#d-12-stage-resource-triage--reclamation-sequence)
+- [2. AI Safety Triage & Recommendation Matrix](https://github.com/adithyaqwe/orphan-cleanup#2-ai-safety-triage--recommendation-matrix)
+- [3. Key Architectural Patterns](https://github.com/adithyaqwe/orphan-cleanup#3-key-architectural-patterns)
+- [4. Environment Variables Configuration](https://github.com/adithyaqwe/orphan-cleanup#4-environment-variables-configuration)
+- [5. Local Development Setup Guide](https://github.com/adithyaqwe/orphan-cleanup#5-local-development-setup-guide)
+- [6. Project Directory Structure](https://github.com/adithyaqwe/orphan-cleanup#6-project-directory-structure)
+- [7. REST API Reference & Real-Time Events](https://github.com/adithyaqwe/orphan-cleanup#7-rest-api-reference--real-time-events)
+- [8. Security & Operational Guardrails](https://github.com/adithyaqwe/orphan-cleanup#8-security--operational-guardrails)
+- [9. Verifiable Audit Trail & Compliance Logs](https://github.com/adithyaqwe/orphan-cleanup#9-verifiable-audit-trail--compliance-logs)
 
 ---
 
 ## 1. Architecture Overview & Diagrams
 
-OrphanCleanup continuously monitors temporary cloud resources (EC2 instances, Kubernetes pods, preview build environments, containers) to identify abandoned infra leaks while enforcing a **Zero False Positive Reclamation Guarantee**.
+OrphanCleanup translates complex cloud telemetry and pipeline signals into triaged infrastructure safety profiles, identifies orphaned temporary servers and apps, enforces a 5-minute grace period with continuous liveness monitoring, and provides human-in-the-loop fallback for ambiguous resources.
 
-### A. High-Level System Architecture
+### A. High-Level System Architecture (Flow & Decision)
 
 ```text
   [ Cloud Telemetry / Ingestion ] ──> [ Multi-Factor Detection Engine ]
@@ -52,73 +49,65 @@ OrphanCleanup continuously monitors temporary cloud resources (EC2 instances, Ku
 ```
 
 ### B. Database Data Model & Entity Specifications
+The system maintains core entities in MongoDB via Mongoose ORM: `Resource`, `Pipeline`, `PipelineRun`, `AuditEvent`, `User`, and `Policy`.
 
-The platform maintains core entities in MongoDB via Mongoose ORM:
+#### Database Table / Collection Specifications
 
-| Collection | Key Indexes | Description |
+| Collection | Primary Key / Indexes | Description |
 | :--- | :--- | :--- |
-| **`resources`** | `resourceId`, `organizationId`, `state` | Telemetry records, ownership states, agent heartbeats, workload operations, detection evidence, human review states, and cleanup states. |
-| **`pipelines`** | `pipelineId`, `organizationId` | CI/CD preview builder pipeline configurations and repository metadata. |
-| **`pipelineruns`** | `runId`, `pipelineId`, `organizationId` | Pipeline execution runs (`ACTIVE`, `CRASHED`, `FAILED`), owner assignments, and adopted resource IDs. |
-| **`auditevents`** | `organizationId`, `timestamp`, `action` | Immutable audit trail tracking detection evaluations, safety gatekeeper checks, human decisions, and reclamation events. |
-| **`users`** | `email`, `organizationId` | Authorized accounts with Role-Based Access Control (`ADMIN`, `OPERATOR`, `VIEWER`). |
-| **`policies`** | `organizationId` | Organizational safeguards (protected environments, resource type protections, threshold hours). |
+| **Resource** | `_id` (ObjectId), `resourceId` (Unique String), `state` | Telemetry records, ownership states, agent heartbeats, workload operations, detection evidence, human review states, and cleanup states. |
+| **Pipeline** | `_id` (ObjectId), `pipelineId` (Unique String) | CI/CD preview builder pipeline configurations and repository metadata. |
+| **PipelineRun** | `_id` (ObjectId), `runId` (Unique String), `status` | Pipeline execution runs (`ACTIVE`, `CRASHED`, `FAILED`), owner assignments, and adopted resource IDs. |
+| **AuditEvent** | `_id` (ObjectId), `organizationId`, `timestamp`, `action` | Immutable audit trail tracking detection evaluations, safety gatekeeper checks, human decisions, and reclamation events. |
+| **User** | `_id` (ObjectId), `email` (Unique String), `role` | Authorized accounts with Role-Based Access Control (`ADMIN`, `OPERATOR`, `VIEWER`). |
+| **Policy** | `_id` (ObjectId), `organizationId` | Organizational safeguards (protected environments, resource type protections, threshold hours). |
+
+### C. Dual Telemetry Stream Pipeline
+- **Cloud Intake & Detection Stream**: Ingests resource telemetry (`resourceId`, `type`, `creationTime`, `ownershipState`, `metricsCount`), executes structured Gemini AI analysis, evaluates multi-factor safety rules, and assigns lifecycle state (`PROTECTED`, `VERIFIED_ORPHAN`, `HUMAN_REVIEW_REQUIRED`).
+- **Liveness Monitoring & Grace Stream**: Monitors background grace periods, re-verifies process liveness prior to deletion, and executes automatic *Caught & Reversed* safety reversals if activity resumes.
+
+### D. 12-Stage Resource Triage & Reclamation Sequence
+```text
+1. Resource Ingested ──> 2. Structured Multi-Factor Eval ──> 3. Gemini AI Advisory Analysis
+                                                                    │
+6. Human Review Alert Raised <── 5. Low / Conflicting Metrics <── 4. Deterministic Safety Check
+        │
+        ▼
+7. Operator Review / Approval ──> 8. 5-Min Grace Period Scheduled ──> 9. Continuous Liveness Check
+                                                                    │
+12. Safe Deletion Finalized <── 11. Caught & Reversed Safeguard <── 10. Pre-Reclamation Liveness
+```
 
 ---
 
-## 2. Core Detection & Safety Matrix
+## 2. AI Safety Triage & Recommendation Matrix
 
-The **Multi-Factor Detection Engine** evaluates 5 telemetry dimensions before classifying a resource:
+OrphanCleanup utilizes a structured JSON prompt schema with Google Gemini Advisory AI, paired with a deterministic local rule-based fallback safety classifier:
 
-| Incident Signal | Evaluation Criterion | Engine Decision | Safety Standard |
-| :--- | :--- | :--- | :--- |
-| **Active Pipeline Run** | Associated pipeline run status is `ACTIVE` / `RUNNING` | **PROTECTED** | Never delete resources attached to executing builds |
-| **Verified Owner** | Active developer email assigned (`ownershipState: ACTIVE_OWNER`) | **PROTECTED** | Active owner prevents automated reclamation |
-| **Active Heartbeat** | Fresh agent pulse received within threshold ($\le 15$ min) | **PROTECTED** | Active process heartbeat keeps resource safe |
-| **Active Adoption** | Adopted by running process (`isAdopted: true`) | **PROTECTED** | Adopted child resources protected regardless of parent state |
-| **High Workload** | Workload metrics count $> 50$ operations | **PROTECTED** | High active CPU/Network ops enforce protection |
-| **Uncertain Signals** | Low non-zero metrics ($0 < \text{ops} \le 50$), unconfirmed owner, AI conflict | **HUMAN_REVIEW_REQUIRED** | Automatic deletion strictly blocked; raised for human operator |
-| **Confirmed Orphan** | Crashed run, no owner, unresponsive heartbeat, 0 ops, unadopted | **VERIFIED_ORPHAN** | Eligible for 2-Phase Reclamation |
-
----
-
-## 3. Human-in-the-Loop Safety Fallback System
-
-> **"WHEN THE SYSTEM IS UNCERTAIN, IT DOES NOT DELETE — IT ASKS A HUMAN."**
-
-If detection evidence is conflicting, AI advice conflicts with deterministic rules, ownership is unconfirmed, or workload metrics are ambiguous:
-
-1. **Automatic Cleanup Blocked**: The detection engine transitions state to `HUMAN_REVIEW_REQUIRED` (or `NEEDS_REVIEW`) and halts automated reclamation.
-2. **Operational Human Review UI**: Displays alert cards displaying:
-   - Resource ID & Name
-   - State Badge (`HUMAN_REVIEW_REQUIRED`)
-   - Reason for Review & Uncertainty Details
-   - Owner & Workload Status (`sarah.qa@democorp.com` / 18 ops recorded)
-   - Heartbeat Status (`Heartbeat: Present, but not responding | Adopted: No`)
-   - AI Recommendation vs Deterministic Safety Result
-3. **Operator Actions**:
-   - **Protect Resource**: Operator decision marks resource `PROTECTED` and blocks reclamation.
-   - **Approve Reclaim**: Operator decision moves resource into 5-minute grace period with final liveness monitoring.
-4. **Concurrency Lock**: Prevents race conditions between simultaneous operator decisions.
+| Resource Type | Default Priority | Safety Standard | Required Telemetry Signals | Immediate Action Standard |
+| :--- | :--- | :--- | :--- | :--- |
+| **Active Build Worker** | PROTECTED | High Confidence | Active Pipeline Run, Verified Owner | Protect resource; no cleanup allowed |
+| **Adopted Child Pod** | PROTECTED | High Confidence | Active Adoption Link (`isAdopted: true`) | Preserve adopted pod under new runner |
+| **Unresponsive Heartbeat + 18 Ops** | HUMAN_REVIEW_REQUIRED | Operator Fallback | Present but unresponsive heartbeat, 18 ops | Block auto-delete; raise Human Review Alert |
+| **Crashed Build Server** | VERIFIED_ORPHAN | 5-Min Grace Period | Crashed Run, No Owner, 0 Ops, Stale Heartbeat | Schedule 2-Phase reclamation |
+| **Production Storage** | PROTECTED | Production Rule | Environment `production` / Tag `protected` | Auto-exclude from reclamation |
+| **Unclaimed Volume** | NEEDS_REVIEW | Operator Fallback | Unclaimed owner, low activity | Flag for operator manual review |
 
 ---
 
-## 4. Two-Phase Reclamation & Grace Period Engine
+## 3. Key Architectural Patterns
 
-- **Phase 1 (Grace Period)**: Initiates a 5-minute countdown during which liveness monitoring runs continuously.
-- **Phase 2 (Final Reclamation)**: Re-verifies process activity before cloud API deletion. If activity resumes during the grace period, reclamation is automatically **caught and reversed**, restoring the resource to `PROTECTED`.
-
----
-
-## 5. Key Architectural Safeguards
-
-- **"OLD ≠ ORPHAN" Rule**: Resource age alone never triggers reclamation. Activity and ownership are always verified first.
-- **Fail-Safe AI Degradation**: If `GEMINI_API_KEY` is absent or WAN connectivity drops, the system seamlessly degrades to deterministic safety rules with 100% zero downtime.
-- **Deterministic AI Guardrail**: Advisory AI recommends decisions but **never executes direct cloud deletions**.
+- **Human-in-the-Loop Safety Fallback System**:
+  > **"WHEN THE SYSTEM IS UNCERTAIN, IT DOES NOT DELETE — IT ASKS A HUMAN."**
+  If workload metrics are ambiguous ($0 < \text{ops} \le 50$), evidence conflicts, AI advice conflicts with safety rules, or owner is unconfirmed, automatic deletion is strictly blocked and a **Human Review Alert** is raised.
+- **Two-Phase Reclamation & Liveness Monitoring**: Initiates a 5-minute grace period with continuous liveness monitoring. If workload activity resumes before deletion, reclamation is automatically **caught and reversed** back to `PROTECTED`.
+- **Fail-Safe AI Degradation Pipeline**: If `GEMINI_API_KEY` is absent or WAN connectivity drops, the system seamlessly degrades to deterministic local safety rules with 100% zero downtime guarantee.
+- **Pure JavaScript & ESM Module Architecture**: Written in clean ESM JavaScript (`.js` / `.jsx`) for rapid iteration, maximum bundler speed, and zero compilation friction.
+- **Interactive EOC Command Cartography**: Integrates high-performance glassmorphic UI, real-time analytics hub, state distribution charts, and interactive topology graphs.
 
 ---
 
-## 6. Environment Variables Configuration
+## 4. Environment Variables Configuration
 
 ### Backend Environment Configuration (`backend/.env`)
 
@@ -127,7 +116,7 @@ If detection evidence is conflicting, AI advice conflicts with deterministic rul
 | `PORT` | Yes | Express REST API server listening port | `5000` |
 | `MONGO_URI` | Yes | MongoDB database connection URI | `mongodb://localhost:27017/orphan-cleanup-db` |
 | `JWT_SECRET` | Yes | Secret key for signing JWT authentication tokens | `your-secret-key` |
-| `GEMINI_API_KEY` | Optional | Google Gemini API key for natural-language advisory AI | `AIzaSy...` |
+| `GEMINI_API_KEY` | Optional | Google Gemini AI API key for call classification | `AIzaSy...` |
 
 ### Frontend Environment Configuration (`frontend/.env`)
 
@@ -137,17 +126,15 @@ If detection evidence is conflicting, AI advice conflicts with deterministic rul
 
 ---
 
-## 7. Local Development Setup Guide
+## 5. Local Development Setup Guide
 
 ### Prerequisites
 - **Node.js**: v18.0.0 or higher
 - **npm**: v9.0.0 or higher
-- **MongoDB**: Local MongoDB community server running on port 27017
+- **MongoDB**: Local MongoDB community server running on port 27017 or MongoDB Atlas URI
 
-### Step 1: Install Dependencies
-
+### Step 1: Clone Repository & Install Dependencies
 ```bash
-# Clone repository
 git clone https://github.com/adithyaqwe/orphan-cleanup.git
 cd orphan-cleanup
 
@@ -162,14 +149,15 @@ npm install
 
 ### Step 2: Start Development Servers
 
-In Terminal 1 (Backend Server):
+In Terminal 1 (Backend Server & API Engine):
 ```bash
 cd backend
 npm run dev
 # Express API running on http://localhost:5000
+# Database connected & initial scenario seeded
 ```
 
-In Terminal 2 (Frontend App):
+In Terminal 2 (React + Vite Frontend App):
 ```bash
 cd frontend
 npm run dev
@@ -178,23 +166,23 @@ npm run dev
 
 ---
 
-## 8. Project Directory Structure
+## 6. Project Directory Structure
 
 ```text
 orphan-cleanup/
-├── README.md                  <-- Platform documentation handbook
-├── ARCHITECTURE.md            <-- Architectural specifications & system design
+├── README.md                  <-- Master architectural handbook & system manual
+├── ARCHITECTURE.md            <-- Deep-dive architecture design document
 ├── backend/                   <-- Node.js / Express.js REST API Server
 │   ├── package.json
 │   ├── tests/
 │   │   └── humanReview.test.js <-- 11 Human-in-the-Loop safety test scenarios
 │   └── src/
 │       ├── cleanup/           <-- Two-phase reclamation & concurrency locking engine
-│       ├── controllers/       <-- Express route controllers
+│       ├── controllers/       <-- HTTP route handlers (resources, cleanup, auth)
 │       ├── detection/         <-- Multi-factor detection engine & AWS ingestion
 │       ├── middleware/        <-- Auth, RBAC (ADMIN/OPERATOR/VIEWER), rate limiters
 │       ├── models/            <-- Mongoose schemas (Resource, AuditEvent, User, etc.)
-│       ├── routes/            <-- API endpoint definitions
+│       ├── routes/            <-- Express route definitions
 │       ├── security/          <-- Deterministic safety engine & gatekeepers
 │       ├── services/          <-- Seed service & auto-cleanup background worker
 │       └── server.js          <-- Express server entry point
@@ -202,7 +190,7 @@ orphan-cleanup/
     ├── index.html
     ├── vite.config.js
     └── src/
-        ├── App.jsx
+        ├── App.jsx            <-- Master EOC Command Center layout container
         ├── components/        <-- Status badges, modals, tooltips, buttons, banners
         ├── context/           <-- Authentication context & role providers
         ├── pages/
@@ -216,52 +204,53 @@ orphan-cleanup/
 
 ---
 
-## 9. REST API Reference
+## 7. REST API Reference & Real-Time Events
+
+### REST API Endpoints
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| **GET** | `/api/health` | System health & liveness check |
-| **POST** | `/api/auth/login` | User login & HTTP-Only JWT token issuance |
-| **GET** | `/api/resources` | List resources with filter params (`state`, `search`) |
-| **GET** | `/api/resources/:id` | Fetch 360-degree resource telemetry |
-| **POST** | `/api/detection/evaluate/:id` | Run multi-factor detection engine on resource |
-| **POST** | `/api/ai/analyze/:id` | Query Advisory AI model for natural language analysis |
-| **POST** | `/api/cleanup/human-review/:id/protect` | Protect human review resource (Operator/Admin) |
-| **POST** | `/api/cleanup/human-review/:id/approve-reclaim` | Approve human review reclaim & start grace period |
-| **POST** | `/api/cleanup/schedule/:id` | Start 5-minute Two-Phase grace period |
+| **GET** | `/api/health` | Server liveness & status check |
+| **POST** | `/api/auth/login` | User authentication & HTTP-Only cookie JWT issuance |
+| **GET** | `/api/resources` | List all resources with filters (`state`, `search`) |
+| **GET** | `/api/resources/:id` | Fetch 360-degree telemetry & lifecycle history for a resource |
+| **POST** | `/api/detection/evaluate/:id` | Run multi-factor detection rules on resource |
+| **POST** | `/api/ai/analyze/:id` | Query Advisory AI model for safety recommendation |
+| **POST** | `/api/cleanup/human-review/:id/protect` | Protect resource flagged for human review |
+| **POST** | `/api/cleanup/human-review/:id/approve-reclaim` | Approve human review reclaim & schedule 5-min grace period |
+| **POST** | `/api/cleanup/schedule/:id` | Schedule 5-minute Two-Phase grace period |
 | **POST** | `/api/cleanup/finalize/:id` | Finalize reclamation after liveness re-verification |
 | **POST** | `/api/cleanup/reverse/:id` | Simulate resumed activity & trigger Caught & Reversed |
-| **GET** | `/api/audit` | Fetch immutable compliance operations audit trail |
+| **GET** | `/api/audit` | Retrieve immutable compliance operations audit trail |
 | **POST** | `/api/demo/seed` | Seed Golden Scenario dataset into MongoDB |
 
 ---
 
-## 10. Security, RBAC & Immutable Compliance Audit Trail
+## 8. Security & Operational Guardrails
 
-### Role-Based Access Control (RBAC) Matrix
+- **Sanitized AI Input**: Raw telemetry and resource inputs are sanitized before evaluation by Gemini AI to prevent prompt injection.
+- **Fail-Safe Response Fallbacks**: Deterministic rule-based safety checks guarantee zero downtime even during WAN network outages.
+- **CORS & Cookie Protections**: Express server enforces HTTP-Only JWT cookies and CORS origin restrictions.
+- **Role-Based Access Control (RBAC)**:
 
 | Action | ADMIN | OPERATOR | VIEWER |
 | :--- | :---: | :---: | :---: |
-| View Inventory & Analytics | ✅ | ✅ | ✅ |
+| View Dashboard & Inventory | ✅ | ✅ | ✅ |
 | Run Detection & AI Analysis | ✅ | ✅ | ❌ |
 | Protect Human Review Resource | ✅ | ✅ | ❌ (403) |
 | Approve Human Review Reclaim | ✅ | ✅ | ❌ (403) |
-| Start Grace Period / Finalize Cleanup | ✅ | ✅ | ❌ (403) |
-| Direct Reclaim | ✅ | ❌ | ❌ (403) |
+| Schedule 2-Phase Delete | ✅ | ✅ | ❌ (403) |
+| Direct Cloud Reclaim | ✅ | ❌ | ❌ (403) |
 
 ---
 
-## 🧪 Test Suite Execution
+## 9. Verifiable Audit Trail & Compliance Logs
 
-Run all 9 Jest test suites (52 unit & integration tests):
+Every detection evaluation, unit assignment, human operator decision, and reclamation event is recorded in an immutable `AuditEvent` log containing:
+- `timestamp`: ISO 8601 millisecond timestamp.
+- `actorEmail` & `actorRole`: Email and role of user/system executing action.
+- `action`: `HUMAN_REVIEW_PROTECTED`, `HUMAN_REVIEW_RECLAIM_APPROVED`, `RECLAIM_SCHEDULED`, `RECLAIM_REVERSED_LIVENESS_DETECTED`.
+- `result`: `SUCCESS`, `BLOCKED`, `FAILURE`, or `OVERRIDDEN`.
+- `reason` & `evidence`: Detailed justification array.
 
-```bash
-cd backend
-npm test
-```
-
----
-
-## 📄 License
-
-MIT License.
+Audit logs can be inspected live via the Immutable Operations Audit Trail section in Cleanup Center.
